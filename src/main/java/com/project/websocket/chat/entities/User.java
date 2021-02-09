@@ -28,9 +28,12 @@ public class User {
 
 	@Column(name = "email", unique = true, nullable = false)
 	private String email;
+	
+	@Column(name = "profilePicUrl")
+	private String profilePicUrl;
 
 	@CreatedDate
-	@Column(name = "createdAt")
+	@Column(name = "createdAt", updatable = false)
 	private Timestamp createdAt;
 
 	@LastModifiedDate
@@ -39,12 +42,21 @@ public class User {
 
 	public User() {} //Bos constructor method olmalı..
 
-	public User(String userName, String password, String email, Timestamp createdAt, Timestamp updatedAt) {
+	public User(String userName, String password, String email, Timestamp createdAt, Timestamp updatedAt, String profilePicUrl) {
 		this.userName = userName;
 		this.password = password;
 		this.email = email;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
+		this.profilePicUrl = profilePicUrl;
+	}
+
+	public String getProfilePicUrl() {
+		return profilePicUrl;
+	}
+
+	public void setProfilePicUrl(String profilePicUrl) {
+		this.profilePicUrl = profilePicUrl;
 	}
 
 	public int getId() {

@@ -1,5 +1,8 @@
 package com.project.websocket.chat.Business;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -13,10 +16,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.project.websocket.chat.DataAccess.IUserDal;
 import com.project.websocket.chat.dto.LoginDto;
 import com.project.websocket.chat.entities.User;
+import com.project.websocket.chat.entities.UserImage;
 import com.project.websocket.chat.jwt.JwtUtil;
 
 @Service
@@ -37,27 +42,18 @@ public class UserService implements IUserService, UserDetailsService {
 	}
 
 	@Override
-	public User saveUser(User user) {
-		return userDal.saveUser(user);
-	}
-
-	@Override
 	public User updateUser(User user) {
-		//Bu servis henüz bitmedi.
-		User existUser = userDal.findById(user.getId());
-		userDal.saveUser(existUser);
-		return null;
+		return userDal.updateUser(user);
 	}
 
 	@Override
-	public User deleteUserById(User user) {
-		return userDal.deleteUserById(user);
+	public User deleteUser(User user) {
+		return userDal.deleteUser(user);
 	}
 
 	@Override
-	public List<User> userSearch(User user) {
-		// Bu servis henüz bitmedi..
-		return null;
+	public List<User> userSearch(String userName) {
+		return userDal.userSearch(userName);
 	}
 
 	@Override
@@ -67,19 +63,14 @@ public class UserService implements IUserService, UserDetailsService {
 
 	@Override
 	public List<User> customSelect(User user) {
-		// Bu servis henüz bitmedi..
-		return null;
-	}
-
-	@Override
-	public List<User> saveAllUser(List<User> users) {
-		return userDal.saveAllUser(users);
+		return userDal.customSelect(user);
 	}
 
 	@Override
 	public String login(LoginDto loginDto) throws Exception {
 		BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-		User user = findByUserName(loginDto.getUserName());
+		
+		User user = userDal.findByUserName(loginDto.getUserName());
 		if(user == null )  throw new Exception("Kullanıcı adı ve şifrenizi kontrol ediniz.");
 		
 		boolean isPasswordMatch = passwordEncoder.matches(loginDto.getPassword(), user.getPassword());
@@ -89,35 +80,45 @@ public class UserService implements IUserService, UserDetailsService {
 			authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(loginDto.getUserName(), user.getPassword()));
 		} catch(Exception e) {
-			throw new Exception("oturum açılırken bir sorun oluştur");
+			throw new Exception("Giriş yapılırken bir sorun oluştu");
 		}
 		
-		String result = jwtUtil.generateToken(loginDto.getUserName()) == null ? "kullanıcı yada şifre yanlış" : jwtUtil.generateToken(loginDto.getUserName());
-		
-		return result;
+//		String result = jwtUtil.generateToken(loginDto.getUserName()) == null ? "kullanıcı yada şifre yanlış" : jwtUtil.generateToken(loginDto.getUserName());
+		return jwtUtil.generateToken(loginDto.getUserName());
 	}
 
 	@Override
-	public User register(User user) {
+	public User register(User user) throws Exception {
+		
+		//register olmadan önce böyle bir kullanıcının olup olmadığını kontrol et(userName ve maile göre)
+		
 		BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 		Date date= new Date();
+		
 		String password = user.getPassword();
 		String hashPassword = passwordEncoder.encode(password);
+		
 		user.setPassword(hashPassword);
 		user.setCreatedAt(new Timestamp(date.getTime()));
-		return userDal.saveUser(user);
+		user.setUpdatedAt(new Timestamp(date.getTime()));
+		return userDal.register(user);
 	}
 	
 	@Override
-	public User findByUserName(String userName) {
-		return userDal.findByUserName(userName);
+	public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
+		User user = userDal.findByUserName(userName);
+		return new org.springframework.security.core.userdetails.User(
+				user.getUserName(), user.getPassword(), new ArrayList<>());
 	}
 
 	@Override
-	public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-		User user = findByUserName(userName);
-		return new org.springframework.security.core.userdetails.User(
-				user.getUserName(), user.getPassword(), new ArrayList<>());
+	public User uploadImage(MultipartFile file, int userId) throws IOException {
+		return userDal.uploadImage(file, userId);
+	}
+
+	@Override
+	public User deleteImage(UserImage userImage) throws IOException {
+		return userDal.deleteImage(userImage);
 	}
 
 }

@@ -51,8 +51,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 	@Override
     protected void configure(HttpSecurity http) throws Exception {
 		//3
-        http.csrf().disable().authorizeRequests().antMatchers("/api/login")
-        		.permitAll().antMatchers("/api/register")
+        http.csrf().disable().authorizeRequests().antMatchers("/api/user/login")
+        		.permitAll().antMatchers("/api/user/register")
 //        		.permitAll().antMatchers("/api/test") //Bu apiye tokensiz istek atılmaz
                 .permitAll().anyRequest().authenticated()
                 .and().exceptionHandling().and().sessionManagement()
